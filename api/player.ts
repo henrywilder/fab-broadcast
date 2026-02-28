@@ -19,8 +19,8 @@ const CACHE_TTL_MS = 5 * 60 * 1000 // Cache results for 5 minutes
 interface PlayerResult {
   id: string
   name: string
-  elo: number
-  rank: number
+  elo: number | null   // null when the player exists but has no ELO rating
+  rank: number | null  // null when the player exists but has no ELO rank
   country: string
 }
 
@@ -104,6 +104,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // --- Find the matching player ---
   if (!fabData.results || fabData.results.length === 0) {
+    // The player isn't on the ELO leaderboard. Try a broader search (no rank_type filter)
+    // to see if they exist at all — e.g. they may have XP but no ELO rating yet.
+    const fallbackUrl = `${FAB_API_URL}?search=${encodeURIComponent(playerId)}`
+    try {
+      const fallbackResponse = await fetch(fallbackUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Referer': 'https://fabtcg.com/en/leaderboards/',
+          'Origin': 'https://fabtcg.com',
+        },
+      })
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json() as FabApiResponse
+        if (fallbackData.results && fallbackData.results.length > 0) {
+          // Player exists but has no ELO — return them as "Unrated"
+          const match = fallbackData.results[0]
+          const result: PlayerResult = {
+            id: playerId,
+            name: match.player_full_name,
+            elo: null,
+            rank: null,
+            country: match.country,
+          }
+          cache.set(playerId, { data: result, fetchedAt: Date.now() })
+          return res.status(200).json({ success: true, data: result })
+        }
+      }
+    } catch {
+      // Fallback fetch failed — fall through to the not-found response below
+    }
+
     return res.status(404).json({
       success: false,
       error: `No player found with ID "${playerId}". Double-check the GEM ID and try again.`,

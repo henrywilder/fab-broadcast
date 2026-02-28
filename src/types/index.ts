@@ -3,13 +3,13 @@
 // Defining types here means one place to update if the data structure changes.
 // -----------------------------------------------------------------------
 
-/** A player found on the FAB ELO leaderboard */
+/** A player found via the FAB leaderboard API */
 export interface Player {
-  id: string;       // The GEM player ID that was searched
-  name: string;     // Full display name (e.g. "Brodie Spurlock")
-  elo: number;      // ELO Overall rating (e.g. 1970)
-  rank: number;     // Their rank on the ELO leaderboard (e.g. 142)
-  country: string;  // Two-letter country code (e.g. "US")
+  id: string;            // The GEM player ID that was searched
+  name: string;          // Full display name (e.g. "Brodie Spurlock")
+  elo: number | null;    // ELO Overall rating, or null if the player has no ELO rating
+  rank: number | null;   // Their rank on the ELO leaderboard, or null if unrated
+  country: string;       // Two-letter country code (e.g. "US")
 }
 
 /** The current state of the overlay — what OBS is showing right now */

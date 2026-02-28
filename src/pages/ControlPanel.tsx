@@ -81,10 +81,14 @@ function PlayerSection({
           </div>
           <div className="flex items-center gap-3 text-sm flex-wrap">
             <span className="text-amber-400 font-semibold">
-              ELO {lookedUpPlayer.elo.toLocaleString()}
+              {lookedUpPlayer.elo != null ? `ELO ${lookedUpPlayer.elo.toLocaleString()}` : 'Unrated'}
             </span>
-            <span className="text-zinc-500">·</span>
-            <span className="text-zinc-400">Rank #{lookedUpPlayer.rank.toLocaleString()}</span>
+            {lookedUpPlayer.rank != null && (
+              <>
+                <span className="text-zinc-500">·</span>
+                <span className="text-zinc-400">Rank #{lookedUpPlayer.rank.toLocaleString()}</span>
+              </>
+            )}
             <span className="text-zinc-500">·</span>
             <span className="text-zinc-400 uppercase">{lookedUpPlayer.country}</span>
           </div>
@@ -135,7 +139,7 @@ function PlayerSection({
       <div className="flex items-center gap-2 text-sm text-zinc-500">
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${liveVisible ? 'bg-green-400' : 'bg-zinc-600'}`} />
         {liveVisible && livePlayer
-          ? `Live: ${livePlayer.name} (ELO ${livePlayer.elo.toLocaleString()})`
+          ? `Live: ${livePlayer.name} (${livePlayer.elo != null ? `ELO ${livePlayer.elo.toLocaleString()}` : 'Unrated'})`
           : 'Overlay is hidden'}
       </div>
 

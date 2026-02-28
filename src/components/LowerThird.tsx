@@ -57,12 +57,16 @@ export default function LowerThird({ player, visible, side = 'left' }: LowerThir
           {/* ELO rating and rank — amber to match the accent */}
           <div className={`flex items-center gap-4 mt-2 ${isRight ? 'justify-end' : ''}`}>
             <span className="text-amber-400 text-lg font-semibold tracking-wide">
-              ELO {player?.elo?.toLocaleString() ?? ''}
+              {player?.elo != null ? `ELO ${player.elo.toLocaleString()}` : 'Unrated'}
             </span>
-            <span className="text-zinc-500 text-sm">·</span>
-            <span className="text-zinc-400 text-sm font-medium tracking-wide">
-              RANK #{player?.rank?.toLocaleString() ?? ''}
-            </span>
+            {player?.rank != null && (
+              <>
+                <span className="text-zinc-500 text-sm">·</span>
+                <span className="text-zinc-400 text-sm font-medium tracking-wide">
+                  RANK #{player.rank.toLocaleString()}
+                </span>
+              </>
+            )}
             {player?.country && (
               <>
                 <span className="text-zinc-500 text-sm">·</span>
