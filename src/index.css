@@ -1,0 +1,14 @@
+/* These three lines load all of Tailwind's styles into the project */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  /* Default dark background for the control panel */
+  body {
+    @apply bg-zinc-950 text-white;
+  }
+
+  /* The overlay route overrides this to transparent via JavaScript */
+}
