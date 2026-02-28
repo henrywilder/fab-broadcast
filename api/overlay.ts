@@ -1,21 +1,25 @@
 // api/overlay.ts — Vercel serverless function for overlay state sync.
 //
-// This is the "shared memory" between the control panel and OBS overlay.
-// Because the control panel and OBS are separate browsers, they can't
-// communicate directly. Instead:
-//   - The control panel writes state here (POST)
-//   - The overlay reads state from here (GET) every second
-//
-// State is stored in Upstash Redis — a free, cloud-hosted key-value store.
+// Supports two independent overlay slots: player1 and player2.
+// Each gets its own Redis key so they can be controlled independently
+// and added as separate browser sources in OBS.
 //
 // Endpoints:
-//   GET  /api/overlay        → returns current overlay state
-//   POST /api/overlay        → updates overlay state (body: { player, visible })
+//   GET  /api/overlay?slot=player1   → returns Player 1 overlay state
+//   GET  /api/overlay?slot=player2   → returns Player 2 overlay state
+//   POST /api/overlay?slot=player1   → updates Player 1 overlay state
+//   POST /api/overlay?slot=player2   → updates Player 2 overlay state
+//
+// If no slot is specified, defaults to player1.
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 
-// The Redis key we use to store the overlay state
-const OVERLAY_KEY = 'fab-broadcast:overlay-state'
+// Returns the correct Redis key for the given slot.
+// Using separate keys means P1 and P2 states never interfere with each other.
+function getOverlayKey(slot: string | string[] | undefined): string {
+  if (slot === 'player2') return 'fab-broadcast:overlay-player2'
+  return 'fab-broadcast:overlay-player1' // default to player1
+}
 
 // Initialize the Redis client using environment variables set in Vercel dashboard.
 // These are NOT exposed to the browser — they only exist on the server.
@@ -44,7 +48,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end()
   }
 
-  // --- GET: return the current overlay state ---
+  // Which overlay slot are we working with? Defaults to player1.
+  const OVERLAY_KEY = getOverlayKey(req.query.slot)
+
+  // --- GET: return the current overlay state for this slot ---
   if (req.method === 'GET') {
     try {
       const redis = getRedis()
@@ -62,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // --- POST: update the overlay state ---
+  // --- POST: update the overlay state for this slot ---
   if (req.method === 'POST') {
     try {
       const state = req.body
